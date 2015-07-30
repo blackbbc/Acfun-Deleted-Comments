@@ -1,0 +1,11 @@
+{
+  "taskdb": "sqlite+taskdb://./data/taskdb.db",
+  "projectdb": "sqlite+projectdb://./data/projectdb.db",
+  "resultdb": "mysql+resultdb://deleteso:deletepassso@localhost:3306/deleteso",
+  "message_queue": "amqp://guest:guest@localhost:5672/%2F",
+  "webui": {
+    "username": "root",
+    "password": "admin",
+    "need-auth": true
+  }
+}
