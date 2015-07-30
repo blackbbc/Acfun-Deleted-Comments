@@ -1,6 +1,6 @@
 # Delete-So
 > 感谢原作者[@小川](https://github.com/yuadsl3010/Delete-So)的源代码
-> 本人只是讲爬虫用Pyspider重写了一遍 预计性能会更好
+> 本人只是将爬虫用Pyspider重写了一遍 预计性能会更好
 网站地址：http://sweetll.me:8000
 ======
 
