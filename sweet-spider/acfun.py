@@ -19,8 +19,8 @@ class Handler(BaseHandler):
         }
     }
 
-    #每隔两分钟刷新一次
-    @every(minutes=2)
+    #每隔三分钟刷新一次
+    @every(minutes=3)
     def on_start(self):
         """
         入口函数
@@ -61,7 +61,7 @@ class Handler(BaseHandler):
         accommentsinfo.save()
 
         url = 'http://www.acfun.tv/comment_list_json.aspx?contentId='+ac_id+'&currentPage=1'
-        self.crawl(url, callback=self.parse_first_comment, age=60,
+        self.crawl(url, callback=self.parse_first_comment, age=60, priority=2,
                    save={'info':accommentsinfo.get_info()})
 
     def parse_first_comment(self, response):
@@ -73,14 +73,22 @@ class Handler(BaseHandler):
 
         json_data = json.loads(response.text)
         total_page = json_data['totalPage']
-        for page in range(1, total_page+1):
-            url = 'http://www.acfun.tv/comment_list_json.aspx?contentId='+str(info['id'])+'&currentPage='+str(page)
-            self.crawl(url, callback=self.analyze_comment, age=60,
+        comments = json_data['commentContentArr']
+
+        #首先分发其他页评论
+        for page in range(2, total_page+1):
+            url = 'http://www.acfun.tv/comment_list_json.aspx?contentId=' + \
+                  str(info['id']) + '&currentPage=' + str(page)
+            self.crawl(url, callback=self.parge_comment, age=30*60,
                        save={'info':info})
 
-    def analyze_comment(self, response):
+        #然后解析第一页评论
+        return self.analyze_comment(info, comments)
+
+
+    def parge_comment(self, response):
         """
-        分析评论
+        解析评论页面
         """
         info = response.save['info']
 
@@ -92,6 +100,13 @@ class Handler(BaseHandler):
         json_data = json.loads(response.text)
         comments = json_data['commentContentArr']
 
+        return self.analyze_comment(info, comments)
+
+
+    def analyze_comment(self, info, comments):
+        """
+        分析评论
+        """
         for _, comment in comments.items():
             new_comment = Accomments(comment['cid'], info['id'])
 
@@ -103,7 +118,7 @@ class Handler(BaseHandler):
                 self.check_siji(new_comment)
                 new_comment.save()
             else:
-                self.update_delete(comment['cid'], info['url'])
+                return self.update_delete(comment['cid'], info['url'])
 
     def update_delete(self, cid, url):
         """
@@ -188,7 +203,6 @@ class Accommentsinfo(object):
                 # Create a new record
                 sql = "INSERT INTO `accommentsinfo`(`id`, `type`, `title`, `up`, `postTime`, `url`) VALUES (%s, %s, %s, %s, %s, %s) \
                        ON DUPLICATE KEY UPDATE type=type, title=title, up=up, postTime=postTime, url=url"
-                #sql = "INSERT INTO `users` (`email`, `password`) VALUES (%s, %s)"
                 cursor.execute(sql, (self.info['id'], self.info['type'], self.info['title'], self.info['up'], self.info['postTime'], self.info['url']))
 
             # connection is not autocommit by default. So you must commit to save
@@ -238,7 +252,6 @@ class Accomments(object):
                 # Create a new record
                 sql = "INSERT INTO `accomments`(`cid`, `content`, `userName`, `layer`, `acid`, `isDelete`, `siji`, `checkTime`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) \
                        ON DUPLICATE KEY UPDATE content=content, userName=userName, layer=layer, acid=acid, isDelete=isDelete, siji=siji, checkTime=VALUES(checkTime) "
-                #sql = "INSERT INTO `accommentsinfo`(`id`, `type`, `title`, `up`, `postTime`, `url`) VALUES (%d, %s, %s, %s, %s, %s)"
                 cursor.execute(sql, (self.info['cid'], self.info['content'], self.info['userName'], self.info['layer'], self.info['acid'], self.info['isDelete'], self.info['siji'], self.info['checkTime']))
 
             # connection is not autocommit by default. So you must commit to save
