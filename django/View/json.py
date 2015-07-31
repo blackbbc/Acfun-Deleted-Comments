@@ -270,10 +270,11 @@ def search_ac(search, page, dict):
 
 #带带我
 def search_foyue(page, dict):
-    total_searchs = int(db_ac_contents_siji.objects.all().count()) #获取共有多少条搜索结果，以进行分页
+    total_searchs = int(db_ac_contents.objects.filter(siji=1).count()) #获取共有多少条搜索结果，以进行分页
     sql = '''
             SELECT * FROM (
-                SELECT * FROM accomments_siji
+                SELECT * FROM accomments
+                WHERE siji = 1
                 ORDER BY checkTime DESC
                 LIMIT %s, 10
                 ) as a

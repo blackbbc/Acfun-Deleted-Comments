@@ -154,7 +154,22 @@ class Handler(BaseHandler):
         """
         检查是否老司机
         """
-        comment.set_siji(0)
+        if comment.get_content().find(u"佛曰：") > -1 \
+        or comment.get_content().find(u"如是我闻：") > -1 \
+        or comment.get_content().find(u"*：") > -1:
+            comment.set_siji(1)
+        elif comment.get_content().find(u"ed2k://") > -1:
+            #linkUrl = "ed2k:" + comment.get_content()[comment.get_content().find(u"ed2k://"):]
+            #encodedContent = comment.get_content().replace(self.encodeFoyu(linkUrl),linkUrl,1)
+            #comment.set_content(encodedContent)
+            comment.set_siji(1)
+        elif comment.get_content().find(u"magnet:?") > -1:
+            #linkUrl = "magnet:?" + comment.get_content()[comment.get_content().find(u"magnet:?"):]
+            #encodedContent = comment.get_content().replace(self.encodeFoyu(linkUrl),linkUrl,1)
+            #comment.set_content(encodedContent)
+            comment.set_siji(1)
+        else:
+            comment.set_siji(0)
 
 class Accommentsinfo(object):
     """
@@ -227,6 +242,9 @@ class Accomments(object):
 
     def get_info(self):
         return self.info
+
+    def get_content(self):
+        return self.info['content']
 
     def set_content(self, ac_content):
         self.info['content'] = ac_content

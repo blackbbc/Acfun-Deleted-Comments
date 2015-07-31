@@ -35,7 +35,7 @@ class ResultWorker(object):
             return self.resultdb.save(
                 project=task['project'],
                 taskid=task['taskid'],
-                url=task['url'],
+                url=result.pop('url', None),
                 result=result
             )
         else:
