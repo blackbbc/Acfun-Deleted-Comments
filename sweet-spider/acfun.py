@@ -19,6 +19,9 @@ class Handler(BaseHandler):
         }
     }
 
+    api_get_comment = 'http://www.acfun.tv/comment_list_json.aspx?contentId='
+    api_get_info = ''
+
     #每隔三分钟刷新一次
     @every(minutes=3)
     def on_start(self):
@@ -37,7 +40,7 @@ class Handler(BaseHandler):
         """
         for each in response.doc('a[href^="http"]').items():
             #reg_result = re.match(r"http://www.acfun.tv/[av]/a[bc](\d+)", each.attr.href)
-            #目前只抓取文章
+            #目前只抓取文章和视频
             reg_result = re.match(r"http://www.acfun.tv/a/ac(\d+)", each.attr.href)
             if reg_result:
                 self.crawl(each.attr.href, callback=self.parse_page, age=60,
