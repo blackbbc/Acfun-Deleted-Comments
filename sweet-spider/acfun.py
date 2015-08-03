@@ -178,9 +178,9 @@ class Accommentsinfo(object):
     """
     文章/视频/番剧信息
     """
-    info = {}
 
     def __init__(self, ac_id, ac_user_id, ac_type, ac_title, ac_up, ac_post_time, ac_url):
+        self.info = {}
         self.info['id'] = int(ac_id)
         self.info['userId'] = int(ac_user_id)
         self.info['type'] = ac_type
@@ -239,9 +239,8 @@ class Accomments(object):
     评论信息
     """
 
-    info = {}
-
     def __init__(self, ac_cid, ac_acid):
+        self.info = {}
         self.info['cid'] = int(ac_cid)
         self.info['acid'] = int(ac_acid)
         self.info['checkTime'] = str(datetime.datetime.now())
