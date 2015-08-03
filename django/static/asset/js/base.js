@@ -70,7 +70,7 @@ function build_ac_comments(data) {
         var _html = '<div class="cell" id=' + ind + '>'
             + '<div class="title">'
             + '<h3>' + _index + ' ' + val.type + ' - ' + val.title + '</h3>'
-            + '<div style="padding-left: 25px"><p class="subtext pocket-inserted">' + 'UP主 <a href="javascript:">' + val.up + '</a> | ' + '收录时间：' + val.checkTime + ' | 详见&gt; ' + '<a class="comhead" target="_blank" href="' + val.url + '">ac' + val.acid + '</a>'+'</p></div></div>';
+            + '<div style="padding-left: 25px"><p class="subtext pocket-inserted">' + 'UP主 <a href="http://www.acfun.tv/u/'+val.userId+'.aspx" target="_blank">' + val.up + '</a> | ' + '收录时间：' + val.checkTime + ' | 详见&gt; ' + '<a class="comhead" target="_blank" href="' + val.url + '">ac' + val.acid + '</a>'+'</p></div></div>';
         html += _html;
         html += '<div class="RightPost">' + '<h4><span class="badge-info">#' + val.layer + '</span>&nbsp;<b>' + val.userName + '</b>&nbsp</h4>' + '<div class="text-show-view"><p>' + rePrint(val.content) + '</p></div></div>';
         html += '</div>';

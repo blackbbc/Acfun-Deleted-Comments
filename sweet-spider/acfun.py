@@ -50,6 +50,7 @@ class Handler(BaseHandler):
 
         for info in infos:
             ac_id = info['contentId']
+            ac_user_id = info['user']['userId']
             ac_type = Utils.CHANNEL_NAME[str(info['channelId'])]
             ac_title = info['title']
             ac_up = info['user']['username']
@@ -57,7 +58,7 @@ class Handler(BaseHandler):
             ac_url = self.ARTICLE_URL + str(ac_id)
 
             #没问题
-            accommentsinfo = Accommentsinfo(ac_id, ac_type, ac_title, ac_up, ac_post_time, ac_url)
+            accommentsinfo = Accommentsinfo(ac_id, ac_user_id, ac_type, ac_title, ac_up, ac_post_time, ac_url)
             #存一下
             accommentsinfo.save()
 
@@ -179,8 +180,9 @@ class Accommentsinfo(object):
     """
     info = {}
 
-    def __init__(self, ac_id, ac_type, ac_title, ac_up, ac_post_time, ac_url):
+    def __init__(self, ac_id, ac_user_id, ac_type, ac_title, ac_up, ac_post_time, ac_url):
         self.info['id'] = int(ac_id)
+        self.info['userId'] = int(ac_user_id)
         self.info['type'] = ac_type
         self.info['title'] = ac_title
         self.info['up'] = ac_up
@@ -192,6 +194,9 @@ class Accommentsinfo(object):
 
     def set_id(self, ac_id):
         self.info['id'] = int(ac_id)
+
+    def set_user_id(self, ac_user_id):
+        self.info['userId'] = ac_user_id
 
     def set_type(self, ac_type):
         self.info['type'] = ac_type
@@ -218,9 +223,9 @@ class Accommentsinfo(object):
         try:
             with connection.cursor() as cursor:
                 # Create a new record
-                sql = "INSERT INTO `accommentsinfo`(`id`, `type`, `title`, `up`, `postTime`, `url`) VALUES (%s, %s, %s, %s, %s, %s) \
+                sql = "INSERT INTO `accommentsinfo`(`id`, `userId`, `type`, `title`, `up`, `postTime`, `url`) VALUES (%s, %s, %s, %s, %s, %s, %s) \
                        ON DUPLICATE KEY UPDATE type=type, title=title, up=up, postTime=postTime, url=url"
-                cursor.execute(sql, (self.info['id'], self.info['type'], self.info['title'], self.info['up'], self.info['postTime'], self.info['url']))
+                cursor.execute(sql, (self.info['id'], self.info['userId'], self.info['type'], self.info['title'], self.info['up'], self.info['postTime'], self.info['url']))
 
             # connection is not autocommit by default. So you must commit to save
             # your changes.

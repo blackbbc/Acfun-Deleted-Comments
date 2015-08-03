@@ -17,11 +17,12 @@ class ac_comments(models.Manager):
                 row['acid'] = obj[4]
                 row['isDelete'] = obj[5]
                 row['checkTime'] = obj[7]
-                row['type'] = obj[9]
-                row['title'] = obj[10]
-                row['up'] = obj[11]
-                row['postTime'] = obj[12]
-                row['url'] = obj[13]
+                row['userId'] = obj[9]
+                row['type'] = obj[10]
+                row['title'] = obj[11]
+                row['up'] = obj[12]
+                row['postTime'] = obj[13]
+                row['url'] = obj[14]
                 rows.append(row)
         except Exception:
             pass
@@ -97,6 +98,7 @@ class db_comment2db(models.Model):
 
 class db_ac_contents_info(models.Model):
     id = models.IntegerField(primary_key=True)
+    userId = models.IntegerField()
     type = models.CharField(max_length=10)
     title = models.CharField(max_length=1000)
     up = models.CharField(max_length=1000)
