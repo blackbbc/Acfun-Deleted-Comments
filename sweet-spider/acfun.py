@@ -15,12 +15,13 @@ class Handler(BaseHandler):
     crawl_config = {
         'headers': {
             'Host': 'www.acfun.tv',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.125 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) \
+                           Chrome/44.0.2403.125 Safari/537.36'
         }
     }
 
-    api_get_comment = 'http://www.acfun.tv/comment_list_json.aspx?contentId='
-    api_get_info = ''
+    API_GET_COMMENT = 'http://www.acfun.tv/comment_list_json.aspx?contentId='
+    API_GET_INFO = 'http://www.acfun.tv/api/content.aspx?query='
 
     #每隔三分钟刷新一次
     @every(minutes=3)
@@ -28,10 +29,11 @@ class Handler(BaseHandler):
         """
         入口函数
         """
-        self.crawl('http://www.acfun.tv/v/list110/index.htm', callback=self.index_page, force_update=True)
-        self.crawl('http://www.acfun.tv/v/list73/index.htm', callback=self.index_page, force_update=True)
-        self.crawl('http://www.acfun.tv/v/list74/index.htm', callback=self.index_page, force_update=True)
-        self.crawl('http://www.acfun.tv/v/list75/index.htm', callback=self.index_page, force_update=True)
+        self.crawl('http://www.acfun.tv', callback=self.index_page, force_update=True)
+        #self.crawl('http://www.acfun.tv/v/list110/index.htm', callback=self.index_page, force_update=True)
+        #self.crawl('http://www.acfun.tv/v/list73/index.htm', callback=self.index_page, force_update=True)
+        #self.crawl('http://www.acfun.tv/v/list74/index.htm', callback=self.index_page, force_update=True)
+        #self.crawl('http://www.acfun.tv/v/list75/index.htm', callback=self.index_page, force_update=True)
 
 
     def index_page(self, response):
@@ -281,3 +283,55 @@ class Accomments(object):
 
         finally:
             connection.close()
+
+
+class Utils(object):
+    """
+    工具类
+    """
+
+    ANIMATION = 1
+    MUSIC = 58
+    GAME = 59
+    FUN = 60
+    BANGUMI = 67
+    VIDEO = 68
+    SPORT = 69
+    SCIENCE = 70
+    FLASH = 71
+    MUGEN = 72
+
+    ARTICLE_ARTICLE = 63
+    ARTICLE_COLLECTION = 110
+    ARTICLE_WORK_EMOTION = 73
+    ARTICLE_AN_CULTURE = 74
+    ARTICLE_COMIC_LIGHT_NOVEL = 75
+
+    BEST_GAME = 83
+    LIVE_OB = 84
+    LOL = 85
+    FUNY = 86
+    PET = 88
+    EAT = 89
+    MOVIE = 96
+    TV = 97
+    VARIETY = 98
+
+    PILE = 99
+    DOCUMENTARY = 100
+    SING = 101
+    DANCE = 102
+    VOCALOID = 103
+    ACG = 104
+    POP = 105
+    AN_LITE = 106
+    MAD_AMV = 107
+    MMD_3D = 108
+    AN_COMP = 109
+
+    @staticmethod
+    def get_channel_url(channel_id):
+        """
+        获取频道地址
+        """
+        return 'http://www.acfun.tv/v/list'+str(channel_id)+'/index.htm'
