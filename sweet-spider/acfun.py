@@ -14,9 +14,7 @@ from pyspider.libs.base_handler import *
 class Handler(BaseHandler):
     crawl_config = {
         'headers': {
-            'Host': 'www.acfun.tv',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) \
-                           Chrome/44.0.2403.125 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.125 Safari/537.36'
         }
     }
 
@@ -63,7 +61,8 @@ class Handler(BaseHandler):
             #存一下
             accommentsinfo.save()
 
-            url = 'http://www.acfun.tv/comment_list_json.aspx?contentId='+ac_id+'&currentPage=1'
+            url = 'http://www.acfun.tv/comment_list_json.aspx?contentId=' + \
+                   str(ac_id) + '&currentPage=1'
             self.crawl(url, callback=self.parse_first_comment, age=60, priority=2,
                        save={'info':accommentsinfo.get_info()})
 
