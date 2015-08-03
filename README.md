@@ -16,6 +16,7 @@
 ###附：可用API
 ####获取视频信息
 http://www.acfun.tv/api/content.aspx?query=1288500
+
 http://api.acfun.tv/apiserver/content/info?contentId=1741857
 ####获取评论信息
 http://www.acfun.tv/comment_list_json.aspx?contentId=1777166&currentPage=1
