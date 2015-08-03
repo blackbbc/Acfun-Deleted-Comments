@@ -99,7 +99,7 @@ class db_ac_contents_info(models.Model):
     type = models.CharField(max_length=10)
     title = models.CharField(max_length=1000)
     up = models.CharField(max_length=1000)
-    postTime = models.CharField(max_length=100)
+    postTime = models.DateTimeField(max_length=50)
     url = models.CharField(max_length=50)
 
     class Meta:

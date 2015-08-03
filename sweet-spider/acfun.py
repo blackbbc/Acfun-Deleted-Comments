@@ -22,6 +22,8 @@ class Handler(BaseHandler):
 
     API_GET_COMMENT = 'http://www.acfun.tv/comment_list_json.aspx?contentId='
     API_GET_INFO = 'http://www.acfun.tv/api/content.aspx?query='
+    VIDEO_URL = 'http://www.acfun.tv/v/ac'
+    ARTICLE_URL = 'http://www.acfun.tv/a/ac'
 
     #每隔三分钟刷新一次
     @every(minutes=3)
@@ -29,11 +31,11 @@ class Handler(BaseHandler):
         """
         入口函数
         """
-        self.crawl('http://www.acfun.tv', callback=self.index_page, force_update=True)
-        #self.crawl('http://www.acfun.tv/v/list110/index.htm', callback=self.index_page, force_update=True)
-        #self.crawl('http://www.acfun.tv/v/list73/index.htm', callback=self.index_page, force_update=True)
-        #self.crawl('http://www.acfun.tv/v/list74/index.htm', callback=self.index_page, force_update=True)
-        #self.crawl('http://www.acfun.tv/v/list75/index.htm', callback=self.index_page, force_update=True)
+        #self.crawl('http://www.acfun.tv/', callback=self.index_page, force_update=True)
+        self.crawl('http://www.acfun.tv/v/list110/index.htm', callback=self.index_page, force_update=True)
+        self.crawl('http://www.acfun.tv/v/list73/index.htm', callback=self.index_page, force_update=True)
+        self.crawl('http://www.acfun.tv/v/list74/index.htm', callback=self.index_page, force_update=True)
+        self.crawl('http://www.acfun.tv/v/list75/index.htm', callback=self.index_page, force_update=True)
 
 
     def index_page(self, response):
@@ -43,31 +45,39 @@ class Handler(BaseHandler):
         for each in response.doc('a[href^="http"]').items():
             #reg_result = re.match(r"http://www.acfun.tv/[av]/a[bc](\d+)", each.attr.href)
             #目前只抓取文章和视频
-            reg_result = re.match(r"http://www.acfun.tv/a/ac(\d+)", each.attr.href)
+            reg_result = re.match(r"http://www.acfun.tv/[av]/ac(\d+)", each.attr.href)
             if reg_result:
-                self.crawl(each.attr.href, callback=self.parse_page, age=60,
-                           save={'contentId':reg_result.group(1)})
+                content_id = int(reg_result.group(1))
+                #顺着这篇网址往前爬1000个网址
+                for current_id in range(content_id - 100, content_id):
+                    url = self.API_GET_INFO + str(current_id)
+                    self.crawl(url, callback=self.parse_page, age=60)
 
     def parse_page(self, response):
         """
         解析内页
         爬第1页评论
         """
-        ac_id = response.save['contentId']
-        ac_type = response.doc('#area-title-view>div.l>p>a').eq(1).text()
-        ac_title = response.doc('#txt-title-view').text()
-        ac_up = response.doc('#area-title-view>div.l>p>a').eq(2).text()
-        ac_post_time = response.doc('#area-title-view>div.l>p>span').eq(0).text()
-        ac_url = response.url
+        json_data = json.loads(response.text)
+        if json_data['success']:
+            ac_id = json_data['info']['id']
+            ac_type = json_data['info']['channel']['channelName']
+            ac_title = json_data['info']['title']
+            ac_up = json_data['info']['author']
+            ac_post_time = datetime.datetime.fromtimestamp(json_data['info']['posttime'] / 1000)
+            if json_data['videos']:
+                ac_url = self.VIDEO_URL + str(ac_id)
+            else:
+                ac_url = self.ARTICLE_URL + str(ac_id)
 
-        #没问题
-        accommentsinfo = Accommentsinfo(ac_id, ac_type, ac_title, ac_up, ac_post_time, ac_url)
-        #存一下
-        accommentsinfo.save()
+            #没问题
+            accommentsinfo = Accommentsinfo(ac_id, ac_type, ac_title, ac_up, ac_post_time, ac_url)
+            #存一下
+            accommentsinfo.save()
 
-        url = 'http://www.acfun.tv/comment_list_json.aspx?contentId='+ac_id+'&currentPage=1'
-        self.crawl(url, callback=self.parse_first_comment, age=60, priority=2,
-                   save={'info':accommentsinfo.get_info()})
+            url = 'http://www.acfun.tv/comment_list_json.aspx?contentId='+ac_id+'&currentPage=1'
+            self.crawl(url, callback=self.parse_first_comment, age=60, priority=2,
+                       save={'info':accommentsinfo.get_info()})
 
     def parse_first_comment(self, response):
         """
