@@ -31,44 +31,32 @@ class Handler(BaseHandler):
         """
         入口函数
         """
-        #self.crawl('http://www.acfun.tv/', callback=self.index_page, force_update=True)
-        self.crawl('http://www.acfun.tv/v/list110/index.htm', callback=self.index_page, force_update=True)
-        self.crawl('http://www.acfun.tv/v/list73/index.htm', callback=self.index_page, force_update=True)
-        self.crawl('http://www.acfun.tv/v/list74/index.htm', callback=self.index_page, force_update=True)
-        self.crawl('http://www.acfun.tv/v/list75/index.htm', callback=self.index_page, force_update=True)
+        channel_ids = [
+            Utils.ARTICLE_COLLECTION,
+            Utils.ARTICLE_ARTICLE,
+            Utils.ARTICLE_AN_CULTURE,
+            Utils.ARTICLE_COMIC_LIGHT_NOVEL
+        ]
+        for channel_id in channel_ids:
+            for page_no in range(1, 100):
+                url = Utils.get_channel_url(channel_id, page_no)
+                self.crawl(url, callback=self.parse_channel_page, force_update=True)
 
-
-    def index_page(self, response):
+    def parse_channel_page(self, response):
         """
-        解析主页
-        """
-        for each in response.doc('a[href^="http"]').items():
-            #reg_result = re.match(r"http://www.acfun.tv/[av]/a[bc](\d+)", each.attr.href)
-            #目前只抓取文章和视频
-            reg_result = re.match(r"http://www.acfun.tv/[av]/ac(\d+)", each.attr.href)
-            if reg_result:
-                content_id = int(reg_result.group(1))
-                #顺着这篇网址往前爬1000个网址
-                for current_id in range(content_id - 100, content_id):
-                    url = self.API_GET_INFO + str(current_id)
-                    self.crawl(url, callback=self.parse_page, age=60)
-
-    def parse_page(self, response):
-        """
-        解析内页
+        解析频道页
         爬第1页评论
         """
         json_data = json.loads(response.text)
-        if json_data['success']:
-            ac_id = json_data['info']['id']
-            ac_type = json_data['info']['channel']['channelName']
-            ac_title = json_data['info']['title']
-            ac_up = json_data['info']['author']
-            ac_post_time = datetime.datetime.fromtimestamp(json_data['info']['posttime'] / 1000)
-            if json_data['videos']:
-                ac_url = self.VIDEO_URL + str(ac_id)
-            else:
-                ac_url = self.ARTICLE_URL + str(ac_id)
+        infos = json_data['data']['page']['list']
+
+        for info in infos:
+            ac_id = info['contentId']
+            ac_type = Utils.CHANNEL_NAME[str(info['channelId'])]
+            ac_title = info['title']
+            ac_up = info['user']['username']
+            ac_post_time = datetime.datetime.fromtimestamp(info['releaseDate'] / 1000)
+            ac_url = self.ARTICLE_URL + str(ac_id)
 
             #没问题
             accommentsinfo = Accommentsinfo(ac_id, ac_type, ac_title, ac_up, ac_post_time, ac_url)
@@ -339,9 +327,17 @@ class Utils(object):
     MMD_3D = 108
     AN_COMP = 109
 
+    CHANNEL_NAME = {
+        '110': '综合',
+        '73': '工作·情感',
+        '74': '动漫文化',
+        '75': '漫画·轻小说'
+    }
+
     @staticmethod
-    def get_channel_url(channel_id):
+    def get_channel_url(channel_id, page_no):
         """
         获取频道地址
         """
-        return 'http://www.acfun.tv/v/list'+str(channel_id)+'/index.htm'
+        return 'http://api.acfun.tv/apiserver/content/channel?channelId=' + str(channel_id) + \
+               '&pageNo=' + str(page_no)
