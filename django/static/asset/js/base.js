@@ -2,31 +2,31 @@ $(window).scroll(refresh_nav);
 
 function smooth_move_herf(para){
     var pos = $(para).offset().top - 80;
-    $("html,body").animate({scrollTop: pos}, 500); 
+    $("html,body").animate({scrollTop: pos}, 500);
     return false;
 }
 
-function checkSearch() 
-{   
+function checkSearch()
+{
     var search = document.getElementById('search');
     search.setCustomValidity("格式不正确哟，eg：'ac1205967'或者'带带我'");
-}  
+}
 
-function getCookie(name){  
-    var cookieValue = null;  
-    if (document.cookie && document.cookie != '') {  
-        var cookies = document.cookie.split(';');  
-        for (var i = 0; i < cookies.length; i++) {  
-            var cookie = cookies[i].trim();  
-            // Does this cookie string begin with the name we want?  
-            if (cookie.substring(0, name.length + 1) == (name + '=')) {  
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));  
-                break;  
-            }  
-        }  
-    }  
-    return cookieValue;  
-}  
+function getCookie(name){
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 
 //从cookie中获取token
 var csrftoken = getCookie('csrftoken');
@@ -70,12 +70,12 @@ function build_ac_comments(data) {
         var _html = '<div class="cell" id=' + ind + '>'
             + '<div class="title">'
             + '<h3>' + _index + ' ' + val.type + ' - ' + val.title + '</h3>'
-            + '<div style="padding-left: 25px"><p class="subtext pocket-inserted">' + 'UP主 <a href="javascript:">' + val.up + '</a> | ' + val.postTime + ' | 详见&gt; ' + '<a class="comhead" target="_blank" href="' + val.url + '">ac' + val.acid + '</a>'+'</p></div></div>';
+            + '<div style="padding-left: 25px"><p class="subtext pocket-inserted">' + 'UP主 <a href="javascript:">' + val.up + '</a> | ' + '收录时间：' + val.checkTime + ' | 详见&gt; ' + '<a class="comhead" target="_blank" href="' + val.url + '">ac' + val.acid + '</a>'+'</p></div></div>';
         html += _html;
         html += '<div class="RightPost">' + '<h4><span class="badge-info">#' + val.layer + '</span>&nbsp;<b>' + val.userName + '</b>&nbsp</h4>' + '<div class="text-show-view"><p>' + rePrint(val.content) + '</p></div></div>';
         html += '</div>';
     });
-    
+
     return html;
 }
 /*
@@ -278,7 +278,7 @@ function hoverTiles() {
     tile.hover(function() {
         tile.addClass('inactive');
         tile.removeClass('active');
-        $(this).addClass('active');       
+        $(this).addClass('active');
     }, function(){
 //tile.removeClass('active');
 //tile.removeClass('inactive');

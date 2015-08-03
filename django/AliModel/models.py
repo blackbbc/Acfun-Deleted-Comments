@@ -16,6 +16,7 @@ class ac_comments(models.Manager):
                 row['layer'] = obj[3]
                 row['acid'] = obj[4]
                 row['isDelete'] = obj[5]
+                row['checkTime'] = obj[7]
                 row['type'] = obj[9]
                 row['title'] = obj[10]
                 row['up'] = obj[11]
