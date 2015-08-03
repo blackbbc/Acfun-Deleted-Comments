@@ -6,7 +6,7 @@
 
 <p>代码路径：</p>
 <p>|--django //网站源码</p>
-<p>|--sweet-spider //pyspider爬虫框架</p>
+<p>|--pyspider //pyspider爬虫框架</p>
 <p>|--sweet-spider //爬虫源码</p>
 <p>|--README.md </p>
 <p>最近正在将之前的代码迁移至django上，方面以后网站的拓展</p>
