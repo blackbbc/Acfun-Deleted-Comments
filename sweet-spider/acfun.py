@@ -18,10 +18,45 @@ class Handler(BaseHandler):
         }
     }
 
+    MAX_NUM = 6000
+
     API_GET_COMMENT = 'http://www.acfun.tv/comment_list_json.aspx?contentId='
     API_GET_INFO = 'http://www.acfun.tv/api/content.aspx?query='
     VIDEO_URL = 'http://www.acfun.tv/v/ac'
     ARTICLE_URL = 'http://www.acfun.tv/a/ac'
+
+    ACIDS_list = list()
+    ACIDS_set = set()
+
+    def update_proxy(self):
+        """
+        刷新代理
+        """
+        self.crawl("http://cn-proxy.com/", callback=self.parse_proxy_page, age=59*60, priority=10000)
+
+    def parse_proxy_page(self, response):
+        """
+        解析代理页面
+        """
+        Proxy.PROXY_LIST = []
+        for each in response.doc('tbody>tr').items():
+            available_proxy = {
+                "ip": each("td").eq(0).text(),
+                "port": each("td").eq(1).text()
+            }
+            Proxy.PROXY_INDEX = 0
+            Proxy.PROXY_LIST.append(available_proxy)
+
+    def update_queue(self, acid):
+        """
+        更新队列
+        """
+        self.ACIDS_list.append(acid)
+        self.ACIDS_set.add(acid)
+
+        while len(self.ACIDS_list) > self.MAX_NUM:
+            poped_acid = self.ACIDS_list.pop(0)
+            self.ACIDS_set.discard(poped_acid)
 
     #每隔三分钟刷新一次
     @every(minutes=3)
@@ -29,17 +64,29 @@ class Handler(BaseHandler):
         """
         入口函数
         """
+
         channel_ids = [
             Utils.ARTICLE_COLLECTION,
             Utils.ARTICLE_ARTICLE,
             Utils.ARTICLE_AN_CULTURE,
             Utils.ARTICLE_COMIC_LIGHT_NOVEL
         ]
+
+        self.update_proxy()
+
+        #刷新频道信息
         for channel_id in channel_ids:
-            for page_no in range(1, 100):
-                url = Utils.get_channel_url(channel_id, page_no)
-                self.crawl(url, callback=self.parse_channel_page, force_update=True,
-                           proxy=Proxy.get_proxy())
+            url = Utils.get_channel_url(channel_id, 1)
+            self.crawl(url, callback=self.parse_channel_page, force_update=True,
+                       proxy=Proxy.get_proxy())
+
+        #刷新评论信息
+        for acid in self.ACIDS_list:
+            url = 'http://www.acfun.tv/comment_list_json.aspx?contentId=' + \
+                   str(acid) + '&currentPage=1'
+            self.crawl(url, callback=self.parse_first_comment, age=60, priority=2,
+                       save={'acid':acid},
+                       proxy=Proxy.get_proxy())
 
     def parse_channel_page(self, response):
         """
@@ -58,23 +105,21 @@ class Handler(BaseHandler):
             ac_post_time = datetime.datetime.fromtimestamp(info['releaseDate'] / 1000)
             ac_url = self.ARTICLE_URL + str(ac_id)
 
-            #没问题
-            accommentsinfo = Accommentsinfo(ac_id, ac_user_id, ac_type, ac_title, ac_up, ac_post_time, ac_url)
-            #存一下
-            accommentsinfo.save()
+            if ac_id not in self.ACIDS_set:
+                self.update_queue(ac_id)
 
-            url = 'http://www.acfun.tv/comment_list_json.aspx?contentId=' + \
-                   str(ac_id) + '&currentPage=1'
-            self.crawl(url, callback=self.parse_first_comment, age=60, priority=2,
-                       save={'info':accommentsinfo.get_info()},
-                       proxy=Proxy.get_proxy())
+                #没问题
+                accommentsinfo = Accommentsinfo(ac_id, ac_user_id, ac_type, \
+                                                ac_title, ac_up, ac_post_time, ac_url)
+                #存一下
+                accommentsinfo.save()
 
     def parse_first_comment(self, response):
         """
         解析评论第一页
         分发其他页评论
         """
-        info = response.save['info']
+        acid = response.save['acid']
 
         json_data = json.loads(response.text)
         total_page = json_data['totalPage']
@@ -83,21 +128,20 @@ class Handler(BaseHandler):
         #首先分发其他页评论
         for page in range(2, total_page+1):
             url = 'http://www.acfun.tv/comment_list_json.aspx?contentId=' + \
-                  str(info['id']) + '&currentPage=' + str(page)
+                  str(acid) + '&currentPage=' + str(page)
             self.crawl(url, callback=self.parge_comment, age=30*60,
-                       save={'info':info},
+                       save={'acid':acid},
                        proxy=Proxy.get_proxy())
 
-
         #然后解析第一页评论
-        return self.analyze_comment(info, comments)
+        return self.analyze_comment(acid, comments)
 
 
     def parge_comment(self, response):
         """
         解析评论页面
         """
-        info = response.save['info']
+        acid = response.save['acid']
 
         """
         检查是否删除
@@ -107,15 +151,15 @@ class Handler(BaseHandler):
         json_data = json.loads(response.text)
         comments = json_data['commentContentArr']
 
-        return self.analyze_comment(info, comments)
+        return self.analyze_comment(acid, comments)
 
 
-    def analyze_comment(self, info, comments):
+    def analyze_comment(self, acid, comments):
         """
         分析评论
         """
         for _, comment in comments.items():
-            new_comment = Accomments(comment['cid'], info['id'])
+            new_comment = Accomments(comment['cid'], acid)
 
             ac_user_id = comment['userID']
             if ac_user_id != 4:
@@ -125,7 +169,8 @@ class Handler(BaseHandler):
                 self.check_siji(new_comment)
                 new_comment.save()
             else:
-                return self.update_delete(comment['cid'], info['url'])
+                url = "http://www.acfun.tv/a/ac" + str(acid)
+                return self.update_delete(comment['cid'], url)
 
     def update_delete(self, cid, url):
         """
