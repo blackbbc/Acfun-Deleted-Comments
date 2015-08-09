@@ -38,7 +38,8 @@ class Handler(BaseHandler):
         for channel_id in channel_ids:
             for page_no in range(1, 100):
                 url = Utils.get_channel_url(channel_id, page_no)
-                self.crawl(url, callback=self.parse_channel_page, force_update=True)
+                self.crawl(url, callback=self.parse_channel_page, force_update=True,
+                           proxy=Proxy.get_proxy())
 
     def parse_channel_page(self, response):
         """
@@ -65,7 +66,8 @@ class Handler(BaseHandler):
             url = 'http://www.acfun.tv/comment_list_json.aspx?contentId=' + \
                    str(ac_id) + '&currentPage=1'
             self.crawl(url, callback=self.parse_first_comment, age=60, priority=2,
-                       save={'info':accommentsinfo.get_info()})
+                       save={'info':accommentsinfo.get_info()},
+                       proxy=Proxy.get_proxy())
 
     def parse_first_comment(self, response):
         """
@@ -83,7 +85,9 @@ class Handler(BaseHandler):
             url = 'http://www.acfun.tv/comment_list_json.aspx?contentId=' + \
                   str(info['id']) + '&currentPage=' + str(page)
             self.crawl(url, callback=self.parge_comment, age=30*60,
-                       save={'info':info})
+                       save={'info':info},
+                       proxy=Proxy.get_proxy())
+
 
         #然后解析第一页评论
         return self.analyze_comment(info, comments)
@@ -285,6 +289,39 @@ class Accomments(object):
         finally:
             connection.close()
 
+class Proxy(object):
+    PROXY_LIST = [
+        {"ip": "202.194.101.150", "port": "80"},
+        {"ip": "124.206.70.244", "port": "80"},
+        {"ip": "118.123.203.154", "port": "55336"},
+        {"ip": "118.122.87.13", "port": "55336"},
+        {"ip": "120.198.237.5", "port": "8000"},
+        {"ip": "115.182.83.38", "port": "8080"},
+        {"ip": "124.240.187.89", "port": "83"},
+        {"ip": "118.123.209.27", "port": "55336"},
+        {"ip": "101.71.27.120", "port": "80"},
+        {"ip": "101.226.249.237", "port": "80"},
+        {"ip": "112.249.90.147", "port":"8088"},
+        {"ip": "124.240.187.89", "port":"80"},
+        {"ip": "61.184.192.42", "port":"80"},
+        {"ip": "120.192.92.185", "port":"13102"},
+        {"ip": "120.192.92.184", "port":"80"},
+        {"ip": "117.135.241.78", "port":"8080"},
+        {"ip": "113.107.99.47", "port":"55336"},
+        {"ip": "120.192.92.185", "port":"80"},
+        {"ip": "58.215.122.57", "port":"55336"},
+        {"ip": "117.135.241.70", "port":"80"}
+    ]
+
+    PROXY_INDEX = 0
+
+    @staticmethod
+    def get_proxy():
+        length = len(Proxy.PROXY_LIST)
+        Proxy.PROXY_INDEX = (Proxy.PROXY_INDEX + 1) % length
+        proxy_ip = Proxy.PROXY_LIST[Proxy.PROXY_INDEX]['ip']
+        proxy_port = Proxy.PROXY_LIST[Proxy.PROXY_INDEX]['port']
+        return proxy_ip + ':' + proxy_port
 
 class Utils(object):
     """
