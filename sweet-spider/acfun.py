@@ -3,7 +3,6 @@
 # Created on 2015-07-29 15:11:25
 # Project: Acfun
 
-import re
 import json
 import datetime
 
@@ -12,6 +11,10 @@ import pymysql.cursors
 from pyspider.libs.base_handler import *
 
 class Handler(BaseHandler):
+    """
+    Pyspider
+    """
+
     crawl_config = {
         'headers': {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.125 Safari/537.36'
@@ -30,21 +33,24 @@ class Handler(BaseHandler):
 
     def update_proxy(self):
         """
-        刷新代理
+        每隔10分钟刷新代理
         """
-        self.crawl("http://cn-proxy.com/", callback=self.parse_proxy_page, age=59*60, priority=10000)
+        self.crawl("http://cn-proxy.com/", callback=self.parse_proxy_page, \
+                   age=10*60, priority=10000)
 
     def parse_proxy_page(self, response):
         """
         解析代理页面
         """
+
         Proxy.PROXY_LIST = []
+        Proxy.PROXY_INDEX = 0
+
         for each in response.doc('tbody>tr').items():
             available_proxy = {
                 "ip": each("td").eq(0).text(),
                 "port": each("td").eq(1).text()
             }
-            Proxy.PROXY_INDEX = 0
             Proxy.PROXY_LIST.append(available_proxy)
 
     def update_queue(self, acid):
@@ -73,6 +79,9 @@ class Handler(BaseHandler):
         ]
 
         self.update_proxy()
+
+        if len(Proxy.PROXY_LIST) == 0:
+            return
 
         #刷新频道信息
         for channel_id in channel_ids:
@@ -362,6 +371,9 @@ class Proxy(object):
 
     @staticmethod
     def get_proxy():
+        """
+        获取随机代理
+        """
         length = len(Proxy.PROXY_LIST)
         Proxy.PROXY_INDEX = (Proxy.PROXY_INDEX + 1) % length
         proxy_ip = Proxy.PROXY_LIST[Proxy.PROXY_INDEX]['ip']
