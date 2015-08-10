@@ -31,6 +31,8 @@ class Handler(BaseHandler):
     ACIDS_list = list()
     ACIDS_set = set()
 
+    USE_PROXY = False
+
     def update_proxy(self):
         """
         每隔10分钟刷新代理
@@ -78,10 +80,8 @@ class Handler(BaseHandler):
             Utils.ARTICLE_COMIC_LIGHT_NOVEL
         ]
 
-        self.update_proxy()
-
-        if len(Proxy.PROXY_LIST) == 0:
-            return
+        if self.USE_PROXY:
+            self.update_proxy()
 
         #刷新频道信息
         for channel_id in channel_ids:
@@ -354,6 +354,13 @@ class Proxy(object):
         获取随机代理
         """
         length = len(Proxy.PROXY_LIST)
+
+        if not Handler.USE_PROXY:
+            return None
+
+        if length == 0:
+            return None
+
         Proxy.PROXY_INDEX = (Proxy.PROXY_INDEX + 1) % length
         proxy_ip = Proxy.PROXY_LIST[Proxy.PROXY_INDEX]['ip']
         proxy_port = Proxy.PROXY_LIST[Proxy.PROXY_INDEX]['port']
