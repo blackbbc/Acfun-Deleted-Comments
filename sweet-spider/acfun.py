@@ -28,6 +28,7 @@ class Handler(BaseHandler):
     VIDEO_URL = 'http://www.acfun.tv/v/ac'
     ARTICLE_URL = 'http://www.acfun.tv/a/ac'
 
+    channel_ids = list()
     ACIDS_list = list()
     ACIDS_set = set()
 
@@ -59,12 +60,62 @@ class Handler(BaseHandler):
         """
         更新队列
         """
-        self.ACIDS_list.append(acid)
-        self.ACIDS_set.add(acid)
+        connection = pymysql.connect(host='localhost',
+                                     user='deleteso',
+                                     passwd='deletepassso',
+                                     db='deleteso',
+                                     charset='utf8',
+                                     cursorclass=pymysql.cursors.DictCursor)
 
-        while len(self.ACIDS_list) > self.MAX_NUM:
-            poped_acid = self.ACIDS_list.pop(0)
-            self.ACIDS_set.discard(poped_acid)
+        try:
+            with connection.cursor() as cursor:
+                self.ACIDS_list.append(acid)
+                self.ACIDS_set.add(acid)
+
+                #添加到数据库中
+                sql = "INSERT INTO `acid_queue`(`acid`) VALUES (%s) \
+                       ON DUPLICATE KEY UPDATE `acid`=VALUES(`acid`)"
+                cursor.execute(sql, acid)
+
+                while len(self.ACIDS_list) > self.MAX_NUM:
+                    poped_acid = self.ACIDS_list.pop(0)
+                    self.ACIDS_set.discard(poped_acid)
+
+                    #从数据库中删除
+                    sql = "DELETE FROM `acid_queue` WHERE `acid` = %s"
+                    cursor.execute(sql, poped_acid)
+
+                connection.commit()
+        finally:
+            connection.close()
+
+    def init_spider(self):
+        """
+        初始化队列
+        """
+        connection = pymysql.connect(host='localhost',
+                                     user='deleteso',
+                                     passwd='deletepassso',
+                                     db='deleteso',
+                                     charset='utf8',
+                                     cursorclass=pymysql.cursors.DictCursor)
+        try:
+            with connection.cursor() as cursor:
+                # Read a single record
+                sql = "SELECT `acid` FROM `acid_queue` ORDER BY `acid` ASC"
+                cursor.execute(sql)
+                result = cursor.fetchall()
+                self.ACIDS_list = [item['acid'] for item in result]
+                self.ACIDS_set = set(self.ACIDS_list)
+        finally:
+            connection.close()
+
+        self.channel_ids = [
+            Utils.ARTICLE_COLLECTION,
+            Utils.ARTICLE_WORK_EMOTION,
+            Utils.ARTICLE_AN_CULTURE,
+            Utils.ARTICLE_COMIC_LIGHT_NOVEL
+        ]
 
     #每隔三分钟刷新一次
     @every(minutes=3)
@@ -73,18 +124,14 @@ class Handler(BaseHandler):
         入口函数
         """
 
-        channel_ids = [
-            Utils.ARTICLE_COLLECTION,
-            Utils.ARTICLE_ARTICLE,
-            Utils.ARTICLE_AN_CULTURE,
-            Utils.ARTICLE_COMIC_LIGHT_NOVEL
-        ]
+        if len(self.ACIDS_list) == 0:
+            self.init_spider()
 
         if self.USE_PROXY:
             self.update_proxy()
 
         #刷新频道信息
-        for channel_id in channel_ids:
+        for channel_id in self.channel_ids:
             url = Utils.get_channel_url(channel_id, 1)
             self.crawl(url, callback=self.parse_channel_page, force_update=True,
                        proxy=Proxy.get_proxy())
