@@ -214,6 +214,8 @@ class Handler(BaseHandler):
         """
         分析评论
         """
+        analyze_result = None
+
         for _, comment in comments.items():
             new_comment = Accomments(comment['cid'], acid)
 
@@ -226,7 +228,10 @@ class Handler(BaseHandler):
                 new_comment.save()
             else:
                 url = "http://www.acfun.tv/a/ac" + str(acid)
-                return self.update_delete(comment['cid'], url)
+                #A fatal bug! Do not return immediately!
+                analyze_result = self.update_delete(comment['cid'], url)
+
+        return analyze_result
 
     def update_delete(self, cid, url):
         """
