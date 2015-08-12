@@ -133,14 +133,20 @@ class Handler(BaseHandler):
         #刷新频道信息
         for channel_id in self.channel_ids:
             url = Utils.get_channel_url(channel_id, 1)
-            self.crawl(url, callback=self.parse_channel_page, force_update=True,
+            self.crawl(url,
+                       callback=self.parse_channel_page,
+                       force_update=True,
+                       priority=3,
                        proxy=Proxy.get_proxy())
 
         #刷新评论信息
         for acid in self.ACIDS_list:
             url = 'http://www.acfun.tv/comment_list_json.aspx?contentId=' + \
                    str(acid) + '&currentPage=1'
-            self.crawl(url, callback=self.parse_first_comment, age=60, priority=2,
+            self.crawl(url,
+                       callback=self.parse_first_comment,
+                       age=60,
+                       priority=2,
                        save={'acid':acid},
                        proxy=Proxy.get_proxy())
 
