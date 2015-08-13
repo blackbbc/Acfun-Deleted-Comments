@@ -1,8 +1,11 @@
 # Delete-So
 > 感谢原作者[@小川](https://github.com/yuadsl3010/Delete-So)的源代码
 > 本人只是将爬虫用Pyspider重写了一遍 预计性能会更好
+
 ###网站地址：http://sweetll.me:8000
 ***********
+####To do list
+[  ] 根据文章评论的增长速度确定爬虫的跟踪时间
 
 <p>代码路径：</p>
 <p>|--django //网站源码</p>
