@@ -114,7 +114,8 @@ class Handler(BaseHandler):
             Utils.ARTICLE_COLLECTION,
             Utils.ARTICLE_WORK_EMOTION,
             Utils.ARTICLE_AN_CULTURE,
-            Utils.ARTICLE_COMIC_LIGHT_NOVEL
+            Utils.ARTICLE_COMIC_LIGHT_NOVEL,
+            Utils.ARTICLE_GAME
         ]
 
     #每隔三分钟刷新一次
@@ -184,8 +185,8 @@ class Handler(BaseHandler):
         acid = response.save['acid']
 
         json_data = json.loads(response.text)
-        total_page = json_data['totalPage']
-        comments = json_data['commentContentArr']
+        total_page = json_data['data']['totalPage']
+        comments = json_data['data']['commentContentArr']
 
         #首先分发其他页评论
         for page in range(2, total_page+1):
@@ -211,7 +212,7 @@ class Handler(BaseHandler):
         是-->检查数据库
         """
         json_data = json.loads(response.text)
-        comments = json_data['commentContentArr']
+        comments = json_data['data']['commentContentArr']
 
         return self.analyze_comment(acid, comments)
 
@@ -445,6 +446,7 @@ class Utils(object):
     ARTICLE_WORK_EMOTION = 73
     ARTICLE_AN_CULTURE = 74
     ARTICLE_COMIC_LIGHT_NOVEL = 75
+    ARTICLE_GAME = 164
 
     BEST_GAME = 83
     LIVE_OB = 84
@@ -472,7 +474,8 @@ class Utils(object):
         '110': '综合',
         '73': '工作·情感',
         '74': '动漫文化',
-        '75': '漫画·轻小说'
+        '75': '漫画·轻小说',
+        '164': '游戏'
     }
 
     @staticmethod
