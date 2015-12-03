@@ -223,11 +223,12 @@ class Handler(BaseHandler):
         """
         analyze_result = None
 
-        for _, comment in comments.items():
-            new_comment = Accomments(comment['cid'], acid)
+        for ccid, comment in comments.items():
+            ccid = int(ccid[1:])
+            new_comment = Accomments(ccid, acid)
 
             ac_user_id = comment['userID']
-            if ac_user_id != 4:
+            if ac_user_id != -1:
                 new_comment.set_content(comment['content'])
                 new_comment.set_user_name(comment['userName'])
                 new_comment.set_layer(comment['count'])
@@ -236,7 +237,7 @@ class Handler(BaseHandler):
             else:
                 url = "http://www.acfun.tv/a/ac" + str(acid)
                 #A fatal bug! Do not return immediately!
-                analyze_result = self.update_delete(comment['cid'], url)
+                analyze_result = self.update_delete(ccid, url)
 
         return analyze_result
 
