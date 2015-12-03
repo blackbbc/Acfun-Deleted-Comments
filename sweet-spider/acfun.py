@@ -38,7 +38,7 @@ class Handler(BaseHandler):
         """
         每隔10分钟刷新代理
         """
-        self.crawl("http://cn-proxy.com/", callback=self.parse_proxy_page, \
+        self.crawl("http://proxylist.hidemyass.com/search-1298218", callback=self.parse_proxy_page, \
                    age=10*60, priority=10000)
 
     def parse_proxy_page(self, response):
@@ -185,7 +185,7 @@ class Handler(BaseHandler):
         acid = response.save['acid']
 
         json_data = json.loads(response.text)
-        total_page = json_data['data']['totalPage']
+        total_page = int(json_data['data']['totalPage'])
         comments = json_data['data']['commentContentArr']
 
         #首先分发其他页评论
@@ -268,7 +268,6 @@ class Handler(BaseHandler):
             result['checkTime'] = result['checkTime'].strftime("%Y-%m-%d %H:%M:%S")
             result['url'] = url
             result.pop('isDelete', None)
-            return result
 
     def check_siji(self, comment):
         """
@@ -351,6 +350,7 @@ class Accommentsinfo(object):
         finally:
             connection.close()
 
+
 class Accomments(object):
     """
     评论信息
@@ -401,6 +401,52 @@ class Accomments(object):
 
         finally:
             connection.close()
+
+    def save_delete(self):
+        connection = pymysql.connect(host='localhost',
+                                     user='deleteso',
+                                     passwd='deletepassso',
+                                     db='deleteso',
+                                     charset='utf8',
+                                     cursorclass=pymysql.cursors.DictCursor)
+        try:
+            with connection.cursor() as cursor:
+                # Create a new record
+                sql = "INSERT INTO `accomments_delete`(`cid`, `content`, `userName`, `layer`, `acid`, `isDelete`, `siji`, `checkTime`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) \
+                       ON DUPLICATE KEY UPDATE content=content, userName=userName, layer=layer, acid=acid, isDelete=isDelete, siji=siji, checkTime=VALUES(checkTime) "
+                cursor.execute(sql, (self.info['cid'], self.info['content'], self.info['userName'], self.info['layer'], self.info['acid'], self.info['isDelete'], self.info['siji'], self.info['checkTime']))
+
+            # connection is not autocommit by default. So you must commit to save
+            # your changes.
+            connection.commit()
+
+        finally:
+            connection.close()
+
+    def save_siji(self):
+        connection = pymysql.connect(host='localhost',
+                                     user='deleteso',
+                                     passwd='deletepassso',
+                                     db='deleteso',
+                                     charset='utf8',
+                                     cursorclass=pymysql.cursors.DictCursor)
+        try:
+            with connection.cursor() as cursor:
+                # Create a new record
+                sql = "INSERT INTO `accomments_siji`(`cid`, `content`, `userName`, `layer`, `acid`, `isDelete`, `siji`, `checkTime`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) \
+                       ON DUPLICATE KEY UPDATE content=content, userName=userName, layer=layer, acid=acid, isDelete=isDelete, siji=siji, checkTime=VALUES(checkTime) "
+                cursor.execute(sql, (self.info['cid'], self.info['content'], self.info['userName'], self.info['layer'], self.info['acid'], self.info['isDelete'], self.info['siji'], self.info['checkTime']))
+
+            # connection is not autocommit by default. So you must commit to save
+            # your changes.
+            connection.commit()
+
+        finally:
+            connection.close()
+
+
+
+
 
 class Proxy(object):
     PROXY_LIST = []
