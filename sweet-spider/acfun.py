@@ -17,7 +17,7 @@ class Handler(BaseHandler):
 
     crawl_config = {
         'headers': {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.125 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36'
         }
     }
 
@@ -444,9 +444,6 @@ class Accomments(object):
 
         finally:
             connection.close()
-
-
-
 
 
 class Proxy(object):
