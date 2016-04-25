@@ -2,9 +2,7 @@
 > 感谢原作者[@小川](https://github.com/yuadsl3010/Delete-So)的源代码
 > 本人只是将爬虫用Pyspider重写了一遍 预计性能会更好
 
-###网站地址：http://sweetll.me:8000
-###哔了狗了 谁知道Django怎么配置SSL
-###由于猴子又乱改API 此项目暂时废弃
+###网站地址：162.243.138.81:8000
 
 ***********
 ####To do list
