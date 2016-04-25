@@ -29,7 +29,23 @@ http://www.acfun.tv/comment_list_json.aspx?contentId=1777166&currentPage=1
 
 ####获取频道信息
 http://api.acfun.tv/apiserver/content/channel?orderBy=1&channelId=110&pageSize=20&pageNo=1
-**************
+
+###以下api共用头
+```json
+"deviceType":"1"
+```
+
+####今日查看最多
+http://api.aixifan.com/searches/channel?channelIds=110&pageNo=1&pageSize=10&sort=1&range=86400000
+
+####今日评论最多
+http://api.aixifan.com/searches/channel?channelIds=110&pageNo=1&pageSize=10&sort=2&range=86400000
+
+####今日收藏最多
+http://api.aixifan.com/searches/channel?channelIds=110&pageNo=1&pageSize=10&sort=3&range=86400000
+
+####今日最新文章
+http://api.aixifan.com/searches/channel?channelIds=110&pageNo=1&pageSize=10&sort=4&range=86400000
 
 ####所有频道信息
 ```java
@@ -47,13 +63,13 @@ http://api.acfun.tv/apiserver/content/channel?orderBy=1&channelId=110&pageSize=2
         public static final int MUGEN     = 72;
 
         public static final class ARTICLE {
-            
             public static final int ARTICLE           = 63;
             public static final int COLLECTION        = 110;
             public static final int WORK_EMOTION      = 73;
             public static final int AN_CULTURE        = 74;
             public static final int COMIC_LIGHT_NOVEL = 75;
         }
+
         public static final int BEST_GAME   = 83;
         public static final int LIVE_OB     = 84;
         public static final int LOL         = 85;
@@ -64,7 +80,6 @@ http://api.acfun.tv/apiserver/content/channel?orderBy=1&channelId=110&pageSize=2
         public static final int MOVIE       = 96;
         public static final int TV          = 97;
         public static final int VARIETY     = 98;
-        
         public static final int PILI        = 99;
         public static final int DOCUMENTARY = 100;
         public static final int SING        = 101;
