@@ -33,5 +33,4 @@ urlpatterns = [
     url(r'^secret/add_black/$', add_black),
 ]
 
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) 
-
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

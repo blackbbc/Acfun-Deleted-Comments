@@ -21,7 +21,7 @@ class Handler(BaseHandler):
         }
     }
 
-    MAX_NUM = 6000
+    MAX_NUM = 1500
 
     API_GET_COMMENT = 'http://www.acfun.tv/comment_list_json.aspx?contentId='
     API_GET_INFO = 'http://www.acfun.tv/api/content.aspx?query='
