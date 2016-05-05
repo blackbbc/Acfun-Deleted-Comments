@@ -3,8 +3,11 @@
 # Created on 2015-07-29 15:11:25
 # Project: Acfun
 
+import thread
 import json
+import time
 import datetime
+import Queue
 
 import pymysql.cursors
 
@@ -32,7 +35,25 @@ class Handler(BaseHandler):
     ACIDS_list = list()
     ACIDS_set = set()
 
+    queue = Queue.PriorityQueue()
+
     USE_PROXY = False
+
+    def looper(self):
+        while True:
+            request = self.__class__.queue.get()[1]
+            if int(time.time())-request['updatetime']-request['age'] >= 0:
+                url = 'http://www.acfun.tv/comment_list_json.aspx?contentId=' + \
+                       str(request['acid']) + '&currentPage=1'
+                self.crawl(url,
+                           callback=self.parse_first_comment,
+                           age=request['age'],
+                           save={'request':request},
+                           proxy=Proxy.get_proxy())
+            else:
+                self.__class__.queue.put((
+                    request['updatetime']+request['age'],
+                    request))
 
     def update_proxy(self):
         """
@@ -69,17 +90,21 @@ class Handler(BaseHandler):
 
         try:
             with connection.cursor() as cursor:
-                self.ACIDS_list.append(acid)
-                self.ACIDS_set.add(acid)
+                self.__class__.ACIDS_list.append(acid)
+                self.__class__.ACIDS_set.add(acid)
+
+                request = {
+
+                }
 
                 #添加到数据库中
                 sql = "INSERT INTO `acid_queue`(`acid`) VALUES (%s) \
                        ON DUPLICATE KEY UPDATE `acid`=VALUES(`acid`)"
                 cursor.execute(sql, acid)
 
-                while len(self.ACIDS_list) > self.MAX_NUM:
-                    poped_acid = self.ACIDS_list.pop(0)
-                    self.ACIDS_set.discard(poped_acid)
+                while len(self.__class__.ACIDS_list) > self.MAX_NUM:
+                    poped_acid = self.__class__.ACIDS_list.pop(0)
+                    self.__class__.ACIDS_set.discard(poped_acid)
 
                     #从数据库中删除
                     sql = "DELETE FROM `acid_queue` WHERE `acid` = %s"
@@ -105,12 +130,12 @@ class Handler(BaseHandler):
                 sql = "SELECT `acid` FROM `acid_queue` ORDER BY `acid` ASC"
                 cursor.execute(sql)
                 result = cursor.fetchall()
-                self.ACIDS_list = [item['acid'] for item in result]
-                self.ACIDS_set = set(self.ACIDS_list)
+                self.__class__.ACIDS_list = [item['acid'] for item in result]
+                self.__class__.ACIDS_set = set(self.__class__.ACIDS_list)
         finally:
             connection.close()
 
-        self.channel_ids = [
+        self.__class__.channel_ids = [
             Utils.ARTICLE_COLLECTION,
             Utils.ARTICLE_WORK_EMOTION,
             Utils.ARTICLE_AN_CULTURE,
@@ -118,37 +143,31 @@ class Handler(BaseHandler):
             Utils.ARTICLE_GAME
         ]
 
-    #每隔三分钟刷新一次
-    @every(minutes=3)
     def on_start(self):
         """
         入口函数
         """
 
-        if len(self.ACIDS_list) == 0:
+        if len(self.__class__.ACIDS_list) == 0:
             self.init_spider()
 
+        thread.start_new_thread(self.looper, ())
+
+    #每隔三分钟刷新一次
+    @every(minutes=3)
+    def crawl_channel(self):
+
+        #刷新代理池
         if self.USE_PROXY:
             self.update_proxy()
 
         #刷新频道信息
-        for channel_id in self.channel_ids:
+        for channel_id in self.__class__.channel_ids:
             url = Utils.get_channel_url(channel_id, 1)
             self.crawl(url,
                        callback=self.parse_channel_page,
                        force_update=True,
-                       priority=3,
-                       proxy=Proxy.get_proxy())
-
-        #刷新评论信息
-        for acid in self.ACIDS_list:
-            url = 'http://www.acfun.tv/comment_list_json.aspx?contentId=' + \
-                   str(acid) + '&currentPage=1'
-            self.crawl(url,
-                       callback=self.parse_first_comment,
-                       age=60,
-                       priority=2,
-                       save={'acid':acid},
+                       priority=10,
                        proxy=Proxy.get_proxy())
 
     def parse_channel_page(self, response):
@@ -168,7 +187,7 @@ class Handler(BaseHandler):
             ac_post_time = datetime.datetime.fromtimestamp(info['releaseDate'] / 1000)
             ac_url = self.ARTICLE_URL + str(ac_id)
 
-            if ac_id not in self.ACIDS_set:
+            if ac_id not in self.__class__.ACIDS_set:
                 self.update_queue(ac_id)
 
                 #没问题
@@ -182,7 +201,8 @@ class Handler(BaseHandler):
         解析评论第一页
         分发其他页评论
         """
-        acid = response.save['acid']
+        request = response.save['request']
+        acid = request['acid']
 
         json_data = json.loads(response.text)
         total_page = int(json_data['data']['totalPage'])
