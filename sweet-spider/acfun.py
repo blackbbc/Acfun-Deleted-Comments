@@ -3,15 +3,28 @@
 # Created on 2015-07-29 15:11:25
 # Project: Acfun
 
-import thread
+import _thread
 import json
 import time
 import datetime
-import Queue
+import queue
 
 import pymysql.cursors
 
 from pyspider.libs.base_handler import *
+
+class SpiderPriorityQueue(queue.PriorityQueue):
+    def __init__(self):
+        queue.PriorityQueue.__init__(self)
+        self.counter = 0
+
+    def put(self, priority, item):
+        queue.PriorityQueue.put(self, (priority, self.counter, item))
+        self.counter += 1
+
+    def get(self, *args, **kwargs):
+        _, _, item = queue.PriorityQueue.get(self, *args, **kwargs)
+        return item
 
 class Handler(BaseHandler):
     """
@@ -35,14 +48,16 @@ class Handler(BaseHandler):
     ACIDS_list = list()
     ACIDS_set = set()
 
-    queue = Queue.PriorityQueue()
+    queue = SpiderPriorityQueue()
 
     USE_PROXY = False
 
     def looper(self):
         while True:
-            request = self.__class__.queue.get()[1]
-            if int(time.time())-request['updatetime']-request['age'] >= 0:
+            request = self.__class__.queue.get()
+            if request['acid'] in self.__class__.ACIDS_set:
+                continue
+            elif int(time.time())-request['updatetime']-request['age'] >= 0:
                 url = 'http://www.acfun.tv/comment_list_json.aspx?contentId=' + \
                        str(request['acid']) + '&currentPage=1'
                 self.crawl(url,
@@ -51,9 +66,9 @@ class Handler(BaseHandler):
                            save={'request':request},
                            proxy=Proxy.get_proxy())
             else:
-                self.__class__.queue.put((
+                self.__class__.queue.put(
                     request['updatetime']+request['age'],
-                    request))
+                    request)
 
     def update_proxy(self):
         """
@@ -93,14 +108,22 @@ class Handler(BaseHandler):
                 self.__class__.ACIDS_list.append(acid)
                 self.__class__.ACIDS_set.add(acid)
 
+                # 新的请求
                 request = {
-
+                    'acid':acid,
+                    'updatetime':0, #立刻爬
+                    'age':60,
+                    'total':0
                 }
 
+                self.__class__.queue.put(
+                    request['updatetime']+request['age'],
+                    request)
+
                 #添加到数据库中
-                sql = "INSERT INTO `acid_queue`(`acid`) VALUES (%s) \
-                       ON DUPLICATE KEY UPDATE `acid`=VALUES(`acid`)"
-                cursor.execute(sql, acid)
+                sql = "INSERT INTO `acid_queue`(`acid`, `updatetime`, `age`, `total`) VALUES (%s, %s, %s, %s) \
+                       ON DUPLICATE KEY UPDATE `acid`=VALUES(`acid`), `updatetime`=VALUES(`updatetime`), `age`=VALUES(`age`), `total`=VALUES(`total`)"
+                cursor.execute(sql, (request['acid'], request['updatetime'], request['age'], request['total']))
 
                 while len(self.__class__.ACIDS_list) > self.MAX_NUM:
                     poped_acid = self.__class__.ACIDS_list.pop(0)
@@ -127,11 +150,15 @@ class Handler(BaseHandler):
         try:
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT `acid` FROM `acid_queue` ORDER BY `acid` ASC"
+                sql = "SELECT * FROM `acid_queue` ORDER BY `acid` ASC"
                 cursor.execute(sql)
                 result = cursor.fetchall()
-                self.__class__.ACIDS_list = [item['acid'] for item in result]
-                self.__class__.ACIDS_set = set(self.__class__.ACIDS_list)
+                for item in result:
+                    self.__class__.ACIDS_list.append(item['acid'])
+                    self.__class__.ACIDS_set.add(item['acid'])
+                    self.__class__.queue.put(
+                            item['updatetime']+item['age'],
+                            item)
         finally:
             connection.close()
 
@@ -151,7 +178,7 @@ class Handler(BaseHandler):
         if len(self.__class__.ACIDS_list) == 0:
             self.init_spider()
 
-        thread.start_new_thread(self.looper, ())
+        _thread.start_new_thread(self.looper, ())
 
     #每隔三分钟刷新一次
     @every(minutes=3)
@@ -206,7 +233,20 @@ class Handler(BaseHandler):
 
         json_data = json.loads(response.text)
         total_page = int(json_data['data']['totalPage'])
+        total_count = int(json_data['data']['totalCount'])
         comments = json_data['data']['commentContentArr']
+
+        #更新age，继续爬
+        delta = total_count - request['total']
+        request['total'] = total_count
+        request['updatetime'] = int(time.time())
+        if delta == 0:
+            request['age'] = request['age'] * 1.1
+        else:
+            request['age'] = request['age'] * 0.8 + (request['age'] / delta) * 0.1
+        self.__class__.queue.put(
+            request['updatetime']+request['age'],
+            request)
 
         #首先分发其他页评论
         for page in range(2, total_page+1):
