@@ -272,9 +272,9 @@ class Handler(BaseHandler):
         request['total'] = total_count
         request['updatetime'] = int(time.time())
         if delta == 0:
-            request['age'] = request['age'] * 1.1
+            request['age'] = min(180, request['age'] * 1.1)
         else:
-            request['age'] = request['age'] * 0.8 + (request['age'] / delta) * 0.1
+            request['age'] = max(10, request['age'] * 0.8 + (request['age'] / delta) * 0.1)
         self.update_request(request)
 
         #首先分发其他页评论
