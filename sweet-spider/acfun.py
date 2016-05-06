@@ -96,7 +96,7 @@ class Handler(BaseHandler):
             }
             Proxy.PROXY_LIST.append(available_proxy)
 
-    def update_queue(self, acid):
+    def add_to_queue(self, acid):
         """
         更新队列
         """
@@ -117,7 +117,8 @@ class Handler(BaseHandler):
                     'acid':acid,
                     'updatetime':0, #立刻爬
                     'age':60,
-                    'total':0
+                    'total':0,
+                    'times':0
                 }
 
                 self.__class__.queue.put(
@@ -125,9 +126,9 @@ class Handler(BaseHandler):
                     request)
 
                 #添加到数据库中
-                sql = "INSERT INTO `acid_queue`(`acid`, `updatetime`, `age`, `total`) VALUES (%s, %s, %s, %s) \
-                       ON DUPLICATE KEY UPDATE `acid`=VALUES(`acid`), `updatetime`=VALUES(`updatetime`), `age`=VALUES(`age`), `total`=VALUES(`total`)"
-                cursor.execute(sql, (request['acid'], request['updatetime'], request['age'], request['total']))
+                sql = "INSERT INTO `acid_queue`(`acid`, `updatetime`, `age`, `total`, `times`) VALUES (%s, %s, %s, %s, %s) \
+                       ON DUPLICATE KEY UPDATE `acid`=VALUES(`acid`), `updatetime`=VALUES(`updatetime`), `age`=VALUES(`age`), `total`=VALUES(`total`), `times`=VALUES(`times`)"
+                cursor.execute(sql, (request['acid'], request['updatetime'], request['age'], request['total'], request['times']))
 
                 while len(self.__class__.ACIDS_list) > self.MAX_NUM:
                     poped_acid = self.__class__.ACIDS_list.pop(0)
@@ -160,9 +161,9 @@ class Handler(BaseHandler):
             with connection.cursor() as cursor:
 
                 #添加到数据库中
-                sql = "INSERT INTO `acid_queue`(`acid`, `updatetime`, `age`, `total`) VALUES (%s, %s, %s, %s) \
-                       ON DUPLICATE KEY UPDATE `acid`=VALUES(`acid`), `updatetime`=VALUES(`updatetime`), `age`=VALUES(`age`), `total`=VALUES(`total`)"
-                cursor.execute(sql, (request['acid'], request['updatetime'], request['age'], request['total']))
+                sql = "INSERT INTO `acid_queue`(`acid`, `updatetime`, `age`, `total`, `times`) VALUES (%s, %s, %s, %s, %s) \
+                       ON DUPLICATE KEY UPDATE `acid`=VALUES(`acid`), `updatetime`=VALUES(`updatetime`), `age`=VALUES(`age`), `total`=VALUES(`total`), `times`=VALUES(`times`)"
+                cursor.execute(sql, (request['acid'], request['updatetime'], request['age'], request['total'], request['times']))
 
                 connection.commit()
         finally:
@@ -246,7 +247,7 @@ class Handler(BaseHandler):
             ac_url = self.ARTICLE_URL + str(ac_id)
 
             if ac_id not in self.__class__.ACIDS_set:
-                self.update_queue(ac_id)
+                self.add_to_queue(ac_id)
 
                 #没问题
                 accommentsinfo = Accommentsinfo(ac_id, ac_user_id, ac_type, \
@@ -269,6 +270,7 @@ class Handler(BaseHandler):
 
         #更新age，继续爬
         delta = total_count - request['total']
+        request['times'] += 1
         request['total'] = total_count
         request['updatetime'] = int(time.time())
         if delta == 0:
