@@ -351,6 +351,7 @@ class Handler(BaseHandler):
                 if result != None:
                     sql = "UPDATE `accomments` SET isDelete=1, checkTime=%s WHERE cid=%s"
                     cursor.execute(sql, (str(datetime.datetime.now()), cid))
+                    # TODO: 插入到delete表
                     connection.commit()
 
         finally:
@@ -472,6 +473,8 @@ class Accomments(object):
 
     def set_siji(self, ac_siji):
         self.info['siji'] = int(ac_siji)
+        if self.ac_siji == 1:
+            self.save_siji()
 
     def save(self):
         connection = pymysql.connect(host='localhost',
