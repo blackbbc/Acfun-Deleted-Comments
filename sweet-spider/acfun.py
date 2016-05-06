@@ -351,7 +351,9 @@ class Handler(BaseHandler):
                 if result != None:
                     sql = "UPDATE `accomments` SET isDelete=1, checkTime=%s WHERE cid=%s"
                     cursor.execute(sql, (str(datetime.datetime.now()), cid))
-                    # TODO: 插入到delete表
+                    sql = "INSERT INTO `accomments_delete`(`cid`, `content`, `userName`, `layer`, `acid`, `isDelete`, `siji`, `checkTime`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) \
+                           ON DUPLICATE KEY UPDATE content=content, userName=userName, layer=layer, acid=acid, isDelete=isDelete, siji=siji, checkTime=VALUES(checkTime) "
+                    cursor.execute(sql, (result['cid'], result['content'], result['userName'], result['layer'], result['acid'], 1, result['siji'], result['checkTime']))
                     connection.commit()
 
         finally:
@@ -473,7 +475,7 @@ class Accomments(object):
 
     def set_siji(self, ac_siji):
         self.info['siji'] = int(ac_siji)
-        if self.ac_siji == 1:
+        if ac_siji == 1:
             self.save_siji()
 
     def save(self):
