@@ -7,6 +7,7 @@ import json
 import time
 import datetime
 from queue import PriorityQueue
+from queue import Empty
 
 import pymysql.cursors
 from pyspider.libs.base_handler import *
@@ -14,12 +15,14 @@ from pyspider.libs.base_handler import *
 class SpiderPriorityQueue(PriorityQueue):
     def __init__(self):
         PriorityQueue.__init__(self)
+        self.counter = 0
 
     def put(self, priority, item):
-        PriorityQueue.put(self, (priority, item))
+        PriorityQueue.put(self, (priority, self.counter, item))
+        self.counter += 1
 
     def get(self, *args, **kwargs):
-        _, item = PriorityQueue.get(self, *args, **kwargs)
+        _, _, item = PriorityQueue.get(self, *args, **kwargs)
         return item
 
 class Handler(BaseHandler):
@@ -70,7 +73,7 @@ class Handler(BaseHandler):
                         request['updatetime']+request['age'],
                         request)
                     return
-            except queue.Empty:
+            except Empty:
                 return
 
     def update_proxy(self):
