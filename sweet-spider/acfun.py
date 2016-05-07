@@ -6,23 +6,20 @@
 import json
 import time
 import datetime
-import queue
+from queue import PriorityQueue
 
 import pymysql.cursors
-
 from pyspider.libs.base_handler import *
 
-class SpiderPriorityQueue(queue.PriorityQueue):
+class SpiderPriorityQueue(PriorityQueue):
     def __init__(self):
-        queue.PriorityQueue.__init__(self)
-        self.counter = 0
+        PriorityQueue.__init__(self)
 
     def put(self, priority, item):
-        queue.PriorityQueue.put(self, (priority, self.counter, item))
-        self.counter += 1
+        PriorityQueue.put(self, (priority, item))
 
     def get(self, *args, **kwargs):
-        _, _, item = queue.PriorityQueue.get(self, *args, **kwargs)
+        _, item = PriorityQueue.get(self, *args, **kwargs)
         return item
 
 class Handler(BaseHandler):
@@ -55,6 +52,7 @@ class Handler(BaseHandler):
     def looper(self):
         while True:
             try:
+                # 出队
                 request = self.__class__.queue.get(False)
                 if request['acid'] not in self.__class__.ACIDS_set:
                     continue
@@ -67,6 +65,7 @@ class Handler(BaseHandler):
                                save={'request':request},
                                proxy=Proxy.get_proxy())
                 else:
+                    # 进队
                     self.__class__.queue.put(
                         request['updatetime']+request['age'],
                         request)
@@ -121,6 +120,7 @@ class Handler(BaseHandler):
                     'times':0
                 }
 
+                # 进队
                 self.__class__.queue.put(
                     request['updatetime']+request['age'],
                     request)
@@ -153,6 +153,7 @@ class Handler(BaseHandler):
                                      charset='utf8',
                                      cursorclass=pymysql.cursors.DictCursor)
 
+        # 进队
         self.__class__.queue.put(
             request['updatetime']+request['age'],
             request)
@@ -363,6 +364,8 @@ class Handler(BaseHandler):
             result['checkTime'] = result['checkTime'].strftime("%Y-%m-%d %H:%M:%S")
             result['url'] = url
             result.pop('isDelete', None)
+
+        return result
 
     def check_siji(self, comment):
         """
