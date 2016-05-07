@@ -21,8 +21,9 @@ else:
 
 ***********
 ####To do list
-- [ ] 根据文章评论的增长速度确定爬虫的跟踪时间
-- [ ] 返回的analyze comment有bug!
+- [x] 根据文章评论的增长速度确定爬虫的跟踪时间
+- [x] 返回的analyze comment只能返回一条，一条就一条吧！
+- [x] project update后所有的变量会被重置？！注释掉project_module.py里_need_update函数中的关于RELOAD_PROJECT_INTERVAL的语句
 
 **********
 
