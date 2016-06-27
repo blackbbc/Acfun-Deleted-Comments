@@ -32,7 +32,8 @@ class Handler(BaseHandler):
 
     crawl_config = {
         'headers': {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36',
+            'deviceType': "1"
         }
     }
 
@@ -627,7 +628,7 @@ class Utils(object):
     @staticmethod
     def get_channel_url(channel_id, page_no):
         """
-        获取频道地址
+        获取频道地址--最新文章
+        http://api.aixifan.com/searches/channel?channelIds=110&pageNo=1&pageSize=10&sort=4&range=86400000
         """
-        return 'http://api.acfun.tv/apiserver/content/channel?channelId=' + str(channel_id) + \
-               '&pageNo=' + str(page_no)
+        return 'http://api.aixifan.com/searches/channel?channelIds={}&pageNo={}&pageSize=10&sort=4&range=86400000'.format(channel_id, page_no)
