@@ -63,6 +63,15 @@ http://api.aixifan.com/searches/channel?channelIds=110&pageNo=1&pageSize=10&sort
 ####今日最新文章
 http://api.aixifan.com/searches/channel?channelIds=110&pageNo=1&pageSize=10&sort=4&range=86400000
 
+####sort类型
+```
+"1": 围观最多
+"2": 评论最多
+"3": 收藏最多
+"5": 最新回复
+"4": 最新发布
+```
+
 ####所有频道信息
 ```java
     public static final class id {
